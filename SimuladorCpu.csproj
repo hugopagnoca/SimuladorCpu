@@ -9,9 +9,7 @@
 
     <ItemGroup>
       <Folder Include="Domain\Events\" />
-      <Folder Include="Domain\Scheduler\" />
       <Folder Include="Infrastructure\EventBus\" />
-      <Folder Include="Infrastructure\Execution\" />
       <Folder Include="Infrastructure\Logging\" />
       <Folder Include="Tests\" />
     </ItemGroup>

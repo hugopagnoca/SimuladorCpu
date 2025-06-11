@@ -12,31 +12,32 @@ public class Cpu
     {
         _memoria = memoria;
     }
-
-    public void Executar(ProcessoSimulado processo)
+    
+    public void ExecutarCiclo(ProcessoSimulado processo)
     {
-        while (!processo.Finalizado)
+        var instrucao = processo.ProximaInstrucao();
+        if (instrucao is null) return;
+
+        Console.WriteLine($"[{processo.Id}] Executando: {instrucao.Opcode} {string.Join(", ", instrucao.Operandos)}");
+
+        switch (instrucao.Opcode)
         {
-            var instrucao = processo.ProximaInstrucao();
-            if (instrucao is null) break;
+            case Opcode.LOAD:
+                processo.Registradores[instrucao.Operandos[0]] = int.Parse(instrucao.Operandos[1]);
+                break;
 
-            Console.WriteLine($"[CPU] Executando: {instrucao.Opcode} {string.Join(", ", instrucao.Operandos)}");
+            case Opcode.ADD:
+                processo.Registradores[instrucao.Operandos[0]] += int.Parse(instrucao.Operandos[1]);
+                break;
 
-            switch (instrucao.Opcode)
-            {
-                case Opcode.LOAD:
-                    processo.Registradores[instrucao.Operandos[0]] = int.Parse(instrucao.Operandos[1]);
-                    break;
-                case Opcode.ADD:
-                    processo.Registradores[instrucao.Operandos[0]] += int.Parse(instrucao.Operandos[1]);
-                    break;
-                case Opcode.STORE:
-                    _memoria.Write(int.Parse(instrucao.Operandos[1]), processo.Registradores[instrucao.Operandos[0]]);
-                    break;
-                case Opcode.HALT:
-                    Console.WriteLine("[CPU] HALT - Processo finalizado");
-                    return;
-            }
+            case Opcode.STORE:
+                var valor = processo.Registradores[instrucao.Operandos[0]];
+                _memoria.Write(int.Parse(instrucao.Operandos[1]), valor);
+                break;
+
+            case Opcode.HALT:
+                Console.WriteLine($"[{processo.Id}] HALT - Finalizado");
+                break;
         }
     }
 }
