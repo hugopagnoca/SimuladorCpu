@@ -16,7 +16,7 @@ public class EscalonadorRoundRobin
 
     public ProcessoSimulado? Proximo()
     {
-        while (_fila.Count is not 0)
+        while (_fila.Count > 0)
         {
             var processo = _fila.Dequeue();
 

@@ -2,12 +2,12 @@
 
 public class Instrucao
 {
-    public Opcode Opcode { get; }
+    public OpCode OpCode { get; }
     public string[] Operandos { get; }
 
-    public Instrucao(Opcode opcode, params string[] operandos)
+    public Instrucao(OpCode opCode, params string[] operandos)
     {
-        Opcode = opcode;
+        OpCode = opCode;
         Operandos = operandos;
     }
 }
