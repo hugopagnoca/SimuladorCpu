@@ -19,17 +19,21 @@ public class SimuladorSistema
         while (true)
         {
             var processo = _escalonador.Proximo();
-            if (processo == null)
+            if (processo is null)
                 break;
 
             Console.WriteLine($"\n=== Executando processo {processo.Id} ===");
 
-            for (var i = 0; i < _escalonador.Quantum && !processo.Finalizado; i++)
+            var instrucoesExecutadas = 0;
+
+            while (instrucoesExecutadas < _escalonador.Quantum)
             {
+                if (processo.Finalizado)
+                    break;
+
                 _cpu.ExecutarCiclo(processo);
+                instrucoesExecutadas++;
             }
         }
-
-        Console.WriteLine("\n--- Fim da simulação ---");
     }
 }

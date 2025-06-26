@@ -8,36 +8,88 @@ public class Cpu
 {
     private readonly Memoria _memoria;
 
+    public delegate void InstrucaoExecutadaHandler(ProcessoSimulado processo, Instrucao instrucao, string status);
+    public event InstrucaoExecutadaHandler? OnInstrucaoExecutada;
+
     public Cpu(Memoria memoria)
     {
         _memoria = memoria;
     }
-    
+
     public void ExecutarCiclo(ProcessoSimulado processo)
     {
-        var instrucao = processo.ProximaInstrucao();
-        if (instrucao is null) return;
+        if (processo.Finalizado)
+            return;
 
-        Console.WriteLine($"[{processo.Id}] Executando: {instrucao.Opcode} {string.Join(", ", instrucao.Operandos)}");
+        var instrucao = processo.InstrucaoAtual();
+        if (instrucao is null)
+            return;
 
-        switch (instrucao.Opcode)
+        // Only invoke for non-HALT instructions
+        if (instrucao.OpCode != OpCode.HALT)
+            OnInstrucaoExecutada?.Invoke(processo, instrucao, "Executando");
+
+        switch (instrucao.OpCode)
         {
-            case Opcode.LOAD:
-                processo.Registradores[instrucao.Operandos[0]] = int.Parse(instrucao.Operandos[1]);
+            case OpCode.HALT:
+                OnInstrucaoExecutada?.Invoke(processo, instrucao, "Finalizado");
+                processo.Finalizar();
+                return;
+            
+            case OpCode.LOAD:
+                ExecutarLoad(processo, instrucao);
                 break;
 
-            case Opcode.ADD:
-                processo.Registradores[instrucao.Operandos[0]] += int.Parse(instrucao.Operandos[1]);
+            case OpCode.ADD:
+                ExecutarAdd(processo, instrucao);
                 break;
 
-            case Opcode.STORE:
-                var valor = processo.Registradores[instrucao.Operandos[0]];
-                _memoria.Write(int.Parse(instrucao.Operandos[1]), valor);
+            case OpCode.STORE:
+                ExecutarStore(processo, instrucao);
                 break;
 
-            case Opcode.HALT:
-                Console.WriteLine($"[{processo.Id}] HALT - Finalizado");
+            case OpCode.JMP:
+                ExecutarJump(processo, instrucao);
                 break;
         }
+    }
+
+    private static void ExecutarLoad(ProcessoSimulado processo, Instrucao instrucao)
+    {
+        var valor = ResolverOperando(processo, instrucao.Operandos[1]);
+        processo.Registradores[instrucao.Operandos[0]] = valor;
+        processo.Avancar();
+    }
+
+    private static void ExecutarAdd(ProcessoSimulado processo, Instrucao instrucao)
+    {
+        var valor = ResolverOperando(processo, instrucao.Operandos[1]);
+        processo.Registradores[instrucao.Operandos[0]] += valor;
+        processo.Avancar();
+    }
+
+    private void ExecutarStore(ProcessoSimulado processo, Instrucao instrucao)
+    {
+        var valor = processo.Registradores[instrucao.Operandos[0]];
+        var endereco = ResolverOperando(processo, instrucao.Operandos[1]);
+        _memoria.Write(endereco, valor);
+        processo.Avancar();
+    }
+    
+    private static void ExecutarJump(ProcessoSimulado processo, Instrucao instrucao)
+    {
+        var novoEndereco = ResolverOperando(processo, instrucao.Operandos[0]);
+        processo.PularPara(novoEndereco);
+    }
+    
+    private static int ResolverOperando(ProcessoSimulado processo, string operando)
+    {
+        if (int.TryParse(operando, out var valorLiteral))
+            return valorLiteral;
+
+        if (processo.Registradores.TryGetValue(operando, out var valorRegistrador))
+            return valorRegistrador;
+
+        throw new ArgumentException($"Operando ou registrador inválido: '{operando}'");
     }
 }
