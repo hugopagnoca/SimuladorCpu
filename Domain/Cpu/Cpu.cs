@@ -24,8 +24,7 @@ public class Cpu
         var instrucao = processo.InstrucaoAtual();
         if (instrucao is null)
             return;
-
-        // Only invoke for non-HALT instructions
+        
         if (instrucao.OpCode != OpCode.HALT)
             OnInstrucaoExecutada?.Invoke(processo, instrucao, "Executando");
 
